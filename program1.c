@@ -9,20 +9,20 @@
 
 enum Arrow{LEFT, UP, DIAGONAL};
 
-int lengthLCS(char* stringX, char* stringY, int lenX, int lenY, int*** tableLCS, enum Arrow*** arrowTable);
+int lengthLCS(char* stringX, char* stringY, int lenX, int lenY, int** tableLCS, enum Arrow** arrowTable);
 
 double runtime(struct timeval* startTime, struct timeval* finishTime);
 
-void printLCS(enum Arrow** arrowTable, char* stringX, int i, int j);
+void printLCS(enum Arrow** arrowTable, char* stringX, int i, int j, FILE* output1);
 
 int main(int argc, char** argv){
 
 	//string in filex.txt and length
-	char* stringX;
+	char* stringX = (char*) malloc(MAX_BUFFER_SIZE*sizeof(char));
 	int lenX;
 	
 	//string in filey.txt and length
-	char* stringY;
+	char* stringY = (char*) malloc(MAX_BUFFER_SIZE*sizeof(char));
 	int lenY;
 	
 	//function that stores the strings from the files in their respective variables
@@ -48,11 +48,11 @@ int main(int argc, char** argv){
 	
 	//LCS length table: allocate two dimensional array of ints
 	//First allocate space for the rows
-	int** tableLCS = malloc(totalRows * sizeof(int));
+	int** tableLCS = malloc(totalRows * sizeof(int*));
 	
 	//Arrow table: allocate two dimensional array of arrows
 	//First allocate space for the rows
-	enum Arrow** arrowTable = malloc(lenX * sizeof(enum Arrow));
+	enum Arrow** arrowTable = malloc(lenX * sizeof(enum Arrow*));
 	
 	//error-checking with informative message
 	if(tableLCS == NULL || arrowTable == NULL){
@@ -87,8 +87,8 @@ int main(int argc, char** argv){
 	gettimeofday(&startTime, NULL);
 	
 	//function to fill up LCS-length table and table of arrows as well as return length of LCS
-	lengthOfLCS = lengthLCS(stringX, stringY, lenX, lenY, &tableLCS, &arrowTable);
-	
+	lengthOfLCS = lengthLCS(stringX, stringY, lenX, lenY, tableLCS, arrowTable);
+
 	//open output file to write
 	output1 = fopen(outName, "w");
 	if(output1 == NULL){
@@ -108,24 +108,34 @@ int main(int argc, char** argv){
 			}
 			fprintf(output1, "\n");
 		}
+		gettimeofday(&finishTime, NULL);
+		totalTime = runtime(&startTime, &finishTime);
+		printLCS(arrowTable, stringX, lenX-1, lenY-1, output1);
+		
+		fprintf(output1, "\n%.6f seconds.", totalTime);
 	}
 	//close file once we are done writing
 	fclose(output1);
+	free(stringX);
+	free(stringY);
+	free(tableLCS);
+	free(arrowTable);
+	
 	
 	return 0;
 }
 
-int lengthLCS(char* stringX, char* stringY, int lenX, int lenY, int*** tableLCS, enum Arrow*** arrowTable){
+int lengthLCS(char* stringX, char* stringY, int lenX, int lenY, int** tableLCS, enum Arrow** arrowTable){
 	//tableLCS and arrowTable are pointers to their respective tables, not the tables themselves
 	
 	int row, column, arrowRow, arrowCol;
 	
 	for(row = 1; row <= lenX; row++){
-		*tableLCS[row][0] = 0;
+		tableLCS[row][0] = 0;
 	}
 	
 	for(column = 0; column <= lenY; column++){
-		*tableLCS[0][column] = 0;
+		tableLCS[0][column] = 0;
 	}
 	
 	for(row = 1; row <= lenX; row++){
@@ -133,19 +143,18 @@ int lengthLCS(char* stringX, char* stringY, int lenX, int lenY, int*** tableLCS,
 		for(column = 1; column <= lenY; column++){
 			arrowCol = column - 1;
 			if(stringX[row-1] == stringY[column-1]){
-				*tableLCS[row][column] = *tableLCS[row-1][column-1] + 1;
-				*arrowTable[arrowRow][arrowCol] = DIAGONAL;
-			} else if(*tableLCS[row-1][column] >= *tableLCS[row][column-1]){
-				*tableLCS[row][column] = *tableLCS[row-1][column];
-				*arrowTable[arrowRow][arrowCol] = UP;
+				tableLCS[row][column] = tableLCS[row-1][column-1] + 1;
+				arrowTable[arrowRow][arrowCol] = DIAGONAL;
+			} else if(tableLCS[row-1][column] >= tableLCS[row][column-1]){
+				tableLCS[row][column] = tableLCS[row-1][column];
+				arrowTable[arrowRow][arrowCol] = UP;
 			} else {
-				*tableLCS[row][column] = *tableLCS[row][column-1];
-				*arrowTable[arrowRow][arrowCol] = LEFT;
+				tableLCS[row][column] = tableLCS[row][column-1];
+				arrowTable[arrowRow][arrowCol] = LEFT;
 			}
 		}
 	}
-	
-	return *tableLCS[lenX][lenY];
+	return tableLCS[lenX][lenY];
 }
 
 double runtime(struct timeval* startTime, struct timeval* finishTime){
@@ -157,17 +166,18 @@ double runtime(struct timeval* startTime, struct timeval* finishTime){
 	return retVal;
 }
 
-void printLCS(enum Arrow** arrowTable, char* stringX, int i, int j){
-	if(i==0 || j==0){
+void printLCS(enum Arrow** arrowTable, char* stringX, int i, int j, FILE* output1){
+	if(i==-1 || j==-1){
 		return;
 	}
+	
 	if(arrowTable[i][j] == DIAGONAL){
-		printLCS(arrowTable, stringX, i-1, j-1);
-		printf("%d", stringX[i-1]);
+		printLCS(arrowTable, stringX, i-1, j-1, output1);
+		fprintf(output1, "%c", stringX[i]);
 	} else if(arrowTable[i][j] == UP){
-		printLCS(arrowTable, stringX, i-1, j);
+		printLCS(arrowTable, stringX, i-1, j, output1);
 	} else{
-		printLCS(arrowTable, stringX, i, j-1);
+		printLCS(arrowTable, stringX, i, j-1, output1);
 	}
 
 }

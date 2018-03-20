@@ -31,7 +31,7 @@ void storeStrings(int argc, char** argv, char** stringX, char** stringY){
 	fscanf(inputX, "%s", *stringX);
 	fclose(inputX);
 	
-	fprintf(stderr, "%s\n", *stringX);
+	
 	
 	
 	
@@ -50,9 +50,7 @@ void storeStrings(int argc, char** argv, char** stringX, char** stringY){
 	//reads string from file in the format specified and stores it to variable then close file
 	fscanf(inputY, "%s", *stringY);
 	fclose(inputY);
-	
-	fprintf(stderr, "%s\n", *stringY);
-	
+
 }
 
 
