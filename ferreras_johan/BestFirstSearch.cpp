@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <queue>
+#include <algorithm>
 #include "string"
 #include "BestFirstSearch.h"
 

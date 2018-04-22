@@ -3,6 +3,7 @@
 #include <fstream>
 #include <stdlib.h>
 #include <vector>
+#include <algorithm>
 #include <queue>
 
 using namespace std;
